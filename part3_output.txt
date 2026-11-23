@@ -1,0 +1,66 @@
+Laptop effective speed from Part 1: 102 GFLOPS, whole model 35.5 ms. Activations sent as int8.
+
+Battery rule (duty cap):
+  Redmi Note 7                   battery    80%  cap 1.0
+  Galaxy A50                     battery    35%  cap 0.5
+  Pixel 3a                       battery    95%  cap 1.0
+  Moto G6                        battery    60%  cap 1.0
+  OnePlus 6                      battery    20%  cap 0.0
+  Raspberry Pi 4 (camera host)   battery   100%  cap 1.0
+
+== Raspberry Pi alone (baseline)
+device                        blocks                                       compute ms  busy %
+Raspberry Pi 4 (camera host)  stem (conv1+bn+relu) .. fc                        725.6     100
+throughput 1.38 img/s | latency 726 ms | chance no used helper drops in 1 h: 100%
+(planning took 0.09 s)
+
+== Drawer, WITH battery rule
+device                        blocks                                       compute ms  busy %
+Raspberry Pi 4 (camera host)  (forwards raw image)                                0.0       0
+Redmi Note 7                  stem (conv1+bn+relu) .. layer1.0                  110.2      98
+Galaxy A50                    layer1.1 .. layer2.0                               56.1      50
+Pixel 3a                      layer2.1 .. layer4.0                              104.6      93
+Moto G6                       layer4.1 .. fc                                     83.3      74
+  link Raspberry Pi 4 (camera host) -> Redmi Note 7: 30.1 ms sending (+17 ms delay), busy 27%
+  link Redmi Note 7 -> Galaxy A50: 64.2 ms sending (+35 ms delay), busy 57%
+  link Galaxy A50 -> Pixel 3a: 32.1 ms sending (+30 ms delay), busy 29%
+  link Pixel 3a -> Moto G6: 13.4 ms sending (+45 ms delay), busy 12%
+throughput 8.92 img/s | latency 658 ms | chance no used helper drops in 1 h: 71%
+
+== Drawer, battery rule OFF (for comparison)
+device                        blocks                                       compute ms  busy %
+Raspberry Pi 4 (camera host)  (forwards raw image)                                0.0       0
+Redmi Note 7                  stem (conv1+bn+relu) .. maxpool                    69.8     100
+OnePlus 6                     layer1.0 .. layer2.0                               57.6      82
+Galaxy A50                    layer2.1 .. layer3.0                               56.1      80
+Moto G6                       layer3.1 .. layer3.1                               63.4      91
+Pixel 3a                      layer4.0 .. fc                                     65.0      93
+  link Raspberry Pi 4 (camera host) -> Redmi Note 7: 30.1 ms sending (+17 ms delay), busy 43%
+  link Redmi Note 7 -> OnePlus 6: 40.1 ms sending (+27 ms delay), busy 57%
+  link OnePlus 6 -> Galaxy A50: 32.1 ms sending (+32 ms delay), busy 46%
+  link Galaxy A50 -> Moto G6: 26.8 ms sending (+55 ms delay), busy 38%
+  link Moto G6 -> Pixel 3a: 26.8 ms sending (+45 ms delay), busy 38%
+throughput 14.32 img/s | latency 656 ms | chance no used helper drops in 1 h: 66%
+
+== Does the drawer beat the Pi alone?
+throughput: 8.92 vs 1.38 img/s = 6.5x
+latency:    658 vs 726 ms = 1.1x lower
+battery rule costs 38% of throughput
+camera runs at 5 fps: Pi alone cannot keep up (queue grows), drawer keeps up
+
+== Where the time goes (mean latency 658 ms at 5 fps)
+  compute             354.1 ms   53.8%
+  transfer            139.8 ms   21.3%
+  network delay       164.0 ms   24.9%
+  waiting in queues     0.0 ms    0.0%
+
+== Dropout test: device dies at t=20 s, noticed after 1.0 s, camera 5 fps
+steady latency before the drop: 658 ms
+device lost                    new img/s  new ms  peak ms replayed 1st out s recovered s
+Redmi Note 7                        7.96     771     2378        4       1.8         4.3
+Galaxy A50                          7.96     593     2200        4       1.6         4.2
+Pixel 3a                            6.59     788     2396        4       1.8         6.5
+Moto G6                             7.96     516     2123        4       1.5         4.2
+(replanning itself took 7 ms at most)
+
+Saved part3_dropout.png (worst case: Pixel 3a)

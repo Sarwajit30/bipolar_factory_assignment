@@ -1,0 +1,7 @@
+device,effective_gflops,battery_pct,link_mbps,link_latency_ms,drop_chance_per_hour
+Redmi Note 7,9,80,40,15,0.05
+Galaxy A50,12,35,25,20,0.10
+Pixel 3a,14,95,60,10,0.02
+Moto G6,6,60,15,35,0.15
+OnePlus 6,18,20,50,12,0.08
+Raspberry Pi 4 (camera host),5,mains,90,2,0.00
