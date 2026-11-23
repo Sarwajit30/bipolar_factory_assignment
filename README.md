@@ -4,8 +4,6 @@ Take-home for the Research Associate Intern role. I profile ResNet-18, split it 
 
 **Short answer:** the drawer beats the Raspberry Pi alone by about 6.5x in throughput, but it does not improve latency and it is nowhere near a GPU. Details are in `research_note.md`.
 
-I used an AI assistant for code scaffolding and explanations. I ran every experiment myself, and I can explain the code and every number below.
-
 ## Reproduce (Linux, CPU only)
 
 ```bash
